@@ -1,5 +1,5 @@
 import Template from "./Template";
-import { base64ToUint8, numberToEncoded } from "./utils";
+import { base64ToUint8, numberToEncoded, convertToGlobalCoordinates} from "./utils";
 
 /** Manages the template system.
  * This class handles all external requests for template modification, creation, and analysis.
@@ -553,11 +553,12 @@ export default class TemplateManager {
           // Start with the origin of the template
           let coords = Array.from(this.templateCoords);
 
-          // Add the offset and apply scaling to the incorrect pixel
-          coords[2] = coords[2] + Math.round(this.incorrectPixelList[i][0] / this.drawMult);
-          coords[3] = coords[3] + Math.round(this.incorrectPixelList[i][1] / this.drawMult);
+          // Get the x and y offset of the incorrect pixel
+          let offsetX = Math.round(this.incorrectPixelList[i][0] / this.drawMult);
+          let offsetY = Math.round(this.incorrectPixelList[i][1] / this.drawMult);
 
-          // TODO: Increment Tl X and Tl Y if the absolute value of x and y are over 1000
+          // Convert to global coordinates
+          coords = convertToGlobalCoordinates(offsetX, offsetY, coords, this.tileSize);
 
           wrongPixelStr = wrongPixelStr + "" + coords[0] + ", " + coords[1] + ", " + coords[2] + ", " + coords[3] + "\n";        
       }
@@ -620,11 +621,15 @@ export default class TemplateManager {
           const sortID = Number(templateKeyArray?.[0]); // Sort ID of the template
           const authorID = templateKeyArray?.[1] || '0'; // User ID of the person who exported the template
           const displayName = templateValue.name || `Template ${sortID || ''}`; // Display name of the template
-          //const coords = templateValue?.coords?.split(',').map(Number); // "1,2,3,4" -> [1, 2, 3, 4]
+          const coords = templateValue?.coords?.split(',').map(Number); // "1,2,3,4" -> [1, 2, 3, 4]
           const tilesbase64 = templateValue.tiles;
           const templateTiles = {}; // Stores the template bitmap tiles for each tile.
           let requiredPixelCount = 0; // Global required pixel count for this imported template
           const paletteMap = new Map(); // Accumulates color counts across tiles (center pixels only)
+
+          // Save our template coordinates
+          this.templateCoords = coords;
+
 
           for (const tile in tilesbase64) {
             console.log(tile);

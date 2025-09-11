@@ -142,6 +142,44 @@ export function selectAllCoordinateInputs(document) {
   return coords;
 }
 
+/** Converts an x,y pixel offset, along with the 4-length coordinate of the origin, into
+ *  4-length global coordinates (TileX, TileY, PixelX, PixelY).
+ * @param {number} offsetX - The x pixel offset
+ * @param {number} offsetY - The y pixel offset
+ * @param {number[]} originCoords - The 4-length array of the origin coordinates [TileX, TileY, PixelX, PixelY]
+ * @param {number} tileSize - The size of a tile in pixels (default 1000)
+ * @returns {number[]} The new 4-length array of global coordinates [TileX, TileY, PixelX, PixelY]
+ */
+export function convertToGlobalCoordinates(offsetX, offsetY, originCoords, tileSize = 1000) {
+
+  // Start with the origin coordinates
+  let [tileX, tileY, pixelX, pixelY] = originCoords;
+
+  // Add the offset to the pixel coordinates.
+  pixelX += offsetX;
+  pixelY += offsetY;
+  
+  // Handle overflow and underflow of pixel coordinates, incrementing/decrementing tile coordinates as needed.
+  while (pixelX >= tileSize) {
+    pixelX -= tileSize;
+    tileX += 1;
+  }
+  while (pixelX < 0) {
+    pixelX += tileSize;
+    tileX -= 1;
+  }
+  while (pixelY >= tileSize) {
+    pixelY -= tileSize;
+    tileY += 1;
+  }
+  while (pixelY < 0) {
+    pixelY += tileSize;
+    tileY -= 1;
+  }
+
+  return [tileX, tileY, pixelX, pixelY];
+}
+
 /** The color palette used by wplace.live
  * @since 0.78.0
  * @examples

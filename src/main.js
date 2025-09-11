@@ -285,14 +285,15 @@ function buildOverlayMain() {
     return overlayMain.addDiv({'id': 'bm-contain-header'})
       .addDiv({'id': 'bm-bar-drag'}).buildElement()
       .addImg({'alt': 'Blue Marble Icon - Click to minimize/maximize', 'src': 'https://raw.githubusercontent.com/SwingTheVine/Wplace-BlueMarble/main/dist/assets/Favicon.png', 'style': 'cursor: pointer;'}, 
-        (instance, img) => {
-          img.addEventListener('click', () => {
-            isMinimized = !isMinimized;
-            handleMinimizeToggle(isMinimized, instance, img);
-          });
-        }
+      (instance, img) => {
+        img.addEventListener('click', () => {
+        isMinimized = !isMinimized;
+        handleMinimizeToggle(isMinimized, instance, img);
+        });
+      }
       ).buildElement()
       .addHeader(1, {'textContent': name}).buildElement()
+      .addP({'textContent': 'PoopGoose variant', 'style': 'margin: 0; font-size: 0.95em; color: #aaa;'}).buildElement()
       .buildElement();
   }
 
@@ -414,8 +415,13 @@ function buildOverlayMain() {
   }
 
   function buildActionButtonsSection(overlayMain) {
-    return overlayMain.addDiv({'id': 'bm-contain-buttons-action'})
-      .addDiv()
+    // Create a horizontal flex container
+    return overlayMain.addDiv({
+        'id': 'bm-contain-buttons-action',
+        'style': 'display: flex; flex-direction: row; align-items: flex-end; gap: 12px;'
+      })
+      // First vertical stack: the two buttons
+      .addDiv({'style': 'display: flex; flex-direction: column; gap: 6px;'})
         .addButton({'id': 'bm-button-convert', 'className': 'bm-help', 'innerHTML': '🎨', 'title': 'Template Color Converter'}, 
           (instance, button) => {
             button.addEventListener('click', () => {
@@ -429,8 +435,14 @@ function buildOverlayMain() {
             });
           }).buildElement()
       .buildElement()
-      .addSmall({'textContent': 'Made by SwingTheVine', 'style': 'margin-top: auto;'}).buildElement()
-      .buildElement();
+      // Second vertical stack: the two labels
+      .addDiv({'style': 'display: flex; flex-direction: column; gap: 0; justify-content: flex-end;'})
+        .addSmall({'textContent': 'Made by SwingTheVine', 'style': 'margin-top: auto;'})
+        .buildElement()
+        .addSmall({'textContent': 'Edited by PoopGoose', 'style': 'margin-top: 0;'})
+        .buildElement()
+      .buildElement()
+    .buildElement();
   }
 
   function handleMinimizeToggle(isMinimized, instance, img) {
