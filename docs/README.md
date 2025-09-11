@@ -10,6 +10,9 @@
     <td>&emsp;<a href="#overview">Overview</a></td>
   </tr>
   <tr>
+  <td>&emsp;&emsp;<a href="#about-the-poopgoose-variant">About the PoopGoose Variant</a></td>
+  </tr>
+  <tr>
     <td>&emsp;&emsp;<a href="#installation-instructions">Installation Instructions</a></td>
   </tr>
   <tr>
@@ -115,6 +118,9 @@
 
 <h2>Overview</h2>
 <p>
+  This is the <b>PoopGoose</b>b> variant of SwingTheVine's Blue Marble. Everything below is from the original Blue Marble README.md. See <a href="#about-the-poopgoose-variant">About the PoopGoose Variant</a> for the additional features of the PoopGoose variant.
+</p>
+<p>
   Welcome to Blue Marble! Blue Marble is a userscript for the website <a href="https://wplace.live/" target="_blank" rel="noopener noreferrer">wplace.live</a>. The purpose of Blue Marble is to allow you to take an image, and layer it onto the canvas! That way, you can easily trace the image of your art, without having to look back and forth between multiple tabs/monitors. In addition, Blue Marble supports some neat extra features such as: 
   <ul>
     <li>Displaying the number of pixels you need to level up</li>
@@ -128,6 +134,14 @@
   If you like this userscript, please ⭐ the repository! For more information and updates, visit the <a href="https://bluemarble.lol/" target="_blank" rel="noopener noreferrer">Blue Marble website</a>. If you wish to contribute to Blue Marble, check out the <a href="https://github.com/SwingTheVine/Wplace-BlueMarble/blob/main/docs/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">CONTRIBUTING.md</a> file in <code>docs/</code>.
 
   <img alt="Showcase image of Blue Marble template" src="./assets/Showcase1.png">
+  <h2 id="about-the-poopgoose-variant">About the PoopGoose Variant</h2>
+  <p>
+    The PoopGoose variant of Blue Marble is a customized fork of the original project. Right now, it only contains a single additional feature,
+    which is displaying the coordinates of incorrectly-painted pixels to help the user find them more easily. This list of features may grow in the future.
+  </p>
+  <p>
+    If you find any issues specific to this variant, please open them on the <a href="https://github.com/poopgoose1/Wplace-BlueMarble/issues">PoopGoose1 GitHub Issues page</a> rather than the original SwingTheVine repository.
+  </p>
 
   <h3>Installation Instructions</h3>
   <a href="" target="_blank" rel="noopener noreferrer"><img alt="Supported Browsers" src="https://img.shields.io/badge/Supported%20Browsers-Chrome%20%7C%20Firefox%2A%20%7C%20Safari%20%7C%20Edge%20%7C%20Brave-orange?style=flat"></a>
