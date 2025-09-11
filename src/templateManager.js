@@ -62,6 +62,13 @@ export default class TemplateManager {
     this.templatesJSON = null; // All templates currently loaded (JSON)
     this.templatesShouldBeDrawn = true; // Should ALL templates be drawn to the canvas?
     this.tileProgress = new Map(); // Tracks per-tile progress stats {painted, required, wrong}
+
+    // The Tl X, TL Y, Px X, Px Y coordinates of the template
+    this.templateCoords = [0,0,0,0];
+
+    // The list of incorrect pixels
+    this.incorrectPixelList = [];
+
   }
 
   /** Retrieves the pixel art canvas.
@@ -124,6 +131,9 @@ export default class TemplateManager {
    * @since 0.65.77
    */
   async createTemplate(blob, name, coords) {
+
+    // Store our coordinates
+    this.templateCoords = coords;
 
     // Creates the JSON object if it does not already exist
     if (!this.templatesJSON) {this.templatesJSON = await this.createJSON(); console.log(`Creating JSON...`);}
@@ -328,6 +338,9 @@ export default class TemplateManager {
           const offsetX = Number(template.pixelCoords[0]) * this.drawMult;
           const offsetY = Number(template.pixelCoords[1]) * this.drawMult;
 
+          // Clear our list of incorrect pixels
+          this.incorrectPixelList = [];
+
           // Loops over all pixels in the template
           // Assigns each pixel a color (if center pixel)
           for (let y = 0; y < tempHeight; y++) {
@@ -404,7 +417,13 @@ export default class TemplateManager {
                 // ELSE IF the pixel matches the template center pixel color
               } else if (realPixelRed === templatePixelCenterRed && realPixelCenterGreen === templatePixelCenterGreen && realPixelCenterBlue === templatePixelCenterBlue) {
                 paintedCount++; // ...the pixel is painted correctly
-              } else {
+              } else 
+              {
+
+                    // Store that we have a wrong pixel. We store them as just the x and y coordinates relative to the
+                    // template origin. When printing, we will add the origin to get the 4-element coordindate
+                    this.incorrectPixelList.push([x, y]);
+
                 wrongCount++; // ...the pixel is NOT painted correctly
               }
             }
@@ -517,8 +536,42 @@ export default class TemplateManager {
       const requiredStr = new Intl.NumberFormat().format(totalRequired);
       const wrongStr = new Intl.NumberFormat().format(totalRequired - aggPainted); // Used to be aggWrong, but that is bugged
 
+      ///// Create the string of incorrect pixels /////
+      let maxPixelsToPrint = 5;
+      let tooManyIncorrect = (this.incorrectPixelList.length > maxPixelsToPrint);
+      let wrongPixelStr = "";
+      let numPixelsToPrint = tooManyIncorrect ? maxPixelsToPrint : this.incorrectPixelList.length;
+
+      //// DEBUGGING ////
+      console.log("Incorrect pixels", this.incorrectPixelList);
+
+      for(let i = 0; i < numPixelsToPrint; i++)
+      {
+
+          ///// Compute the global coordinates from the x-y offsets /////
+
+          // Start with the origin of the template
+          let coords = Array.from(this.templateCoords);
+
+          // Add the offset and apply scaling to the incorrect pixel
+          coords[2] = coords[2] + Math.round(this.incorrectPixelList[i][0] / this.drawMult);
+          coords[3] = coords[3] + Math.round(this.incorrectPixelList[i][1] / this.drawMult);
+
+          // TODO: Increment Tl X and Tl Y if the absolute value of x and y are over 1000
+
+          wrongPixelStr = wrongPixelStr + "" + coords[0] + ", " + coords[1] + ", " + coords[2] + ", " + coords[3] + "\n";        
+      }
+      if(tooManyIncorrect)
+      {
+          wrongPixelStr = wrongPixelStr + "...and more\n";
+      }
+
+
+      ///// Update the display /////
       this.overlay.handleDisplayStatus(
-        `Displaying ${templateCount} template${templateCount == 1 ? '' : 's'}.\nPainted ${paintedStr} / ${requiredStr} • Wrong ${wrongStr}`
+        `Displaying ${templateCount} template${templateCount == 1 ? '' : 's'}.\n
+        Painted ${paintedStr} / ${requiredStr} • Wrong ${wrongStr}\n
+        Wrong pixels:\n${wrongPixelStr}`
       );
     } else {
       this.overlay.handleDisplayStatus(`Displaying ${templateCount} templates.`);
