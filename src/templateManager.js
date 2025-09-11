@@ -66,8 +66,10 @@ export default class TemplateManager {
     // The Tl X, TL Y, Px X, Px Y coordinates of the template
     this.templateCoords = [0,0,0,0];
 
-    // The list of incorrect pixels
-    this.incorrectPixelList = [];
+    // A map of incorrect pixels, based on their color, so that we can display the incorrect pixels
+    // for any activated colors
+    // Keys: 
+    this.incorrectPixelMap = new Map();
 
   }
 
@@ -274,7 +276,8 @@ export default class TemplateManager {
           return {
             bitmap: template.chunked[tile],
             tileCoords: [coords[0], coords[1]],
-            pixelCoords: [coords[2], coords[3]]
+            pixelCoords: [coords[2], coords[3]],
+            allowedColorsSet: template.allowedColorsSet // Set of allowed palette color strings ("r,g,b")
           }
         });
 
@@ -307,6 +310,8 @@ export default class TemplateManager {
     context.clearRect(0, 0, drawSize, drawSize); // Draws transparent background
     context.drawImage(tileBitmap, 0, 0, drawSize, drawSize);
 
+
+
     // Grab a snapshot of the tile pixels BEFORE we draw any template overlays
     let tilePixels = null;
     try {
@@ -338,8 +343,35 @@ export default class TemplateManager {
           const offsetX = Number(template.pixelCoords[0]) * this.drawMult;
           const offsetY = Number(template.pixelCoords[1]) * this.drawMult;
 
-          // Clear our list of incorrect pixels
-          this.incorrectPixelList = [];
+          // DEBUGGING
+          console.log("TEMPLATE");
+          console.log(template);
+
+          // For now, only a single template is enabled. So we can compute our incorrect pixels here, and not
+          // have to worry about the for loop iterating again and re-computing the map. If we enable multiple templates,
+          // this logic will need to be updated to also filter out pixels by template in addition to color.
+
+
+  //     * @param {Object} params
+  //  * @param {ImageBitmap} templateBitmap - The template bitmap for the tile
+  //  * @param {Uint8ClampedArray} tilePixels - The pixel data of the tile (from getImageData)
+  //  * @param {number} drawMult - The draw multiplier (block size)
+  //  * @param {number} offsetX - The X offset of the template in the tile
+  //  * @param {number} offsetY - The Y offset of the template in the tile
+  //  * @param {Set<string>} allowedColorsSet - Set of allowed palette color strings ("r,g,b")
+      let params = {
+        templateBitmap: template.bitmap,
+        tilePixels: tilePixels,
+        drawMult: this.drawMult,
+        offsetX: offsetX,
+        offsetY: offsetY,
+        allowedColorsSet: template.allowedColorsSet};
+
+      this.#computeIncorrectPixels(params);
+
+      // DEBUGGING: Print the incorrect pixel map
+      console.log("Incorrect pixel map:");
+      console.log(this.incorrectPixelMap);
 
           // Loops over all pixels in the template
           // Assigns each pixel a color (if center pixel)
@@ -422,7 +454,7 @@ export default class TemplateManager {
 
                     // Store that we have a wrong pixel. We store them as just the x and y coordinates relative to the
                     // template origin. When printing, we will add the origin to get the 4-element coordindate
-                    this.incorrectPixelList.push([x, y]);
+                    //this.incorrectPixelList.push([x, y]);
 
                 wrongCount++; // ...the pixel is NOT painted correctly
               }
@@ -537,6 +569,7 @@ export default class TemplateManager {
       const wrongStr = new Intl.NumberFormat().format(totalRequired - aggPainted); // Used to be aggWrong, but that is bugged
 
       ///// Create the string of incorrect pixels /////
+      /*
       let maxPixelsToPrint = 5;
       let tooManyIncorrect = (this.incorrectPixelList.length > maxPixelsToPrint);
       let wrongPixelStr = "";
@@ -566,6 +599,8 @@ export default class TemplateManager {
       {
           wrongPixelStr = wrongPixelStr + "...and more\n";
       }
+      */
+     let wrongPixelStr = "TODO";
 
 
       ///// Update the display /////
@@ -579,6 +614,78 @@ export default class TemplateManager {
     }
 
     return await canvas.convertToBlob({ type: 'image/png' });
+  }
+
+  /**
+   * Computes the incorrect pixels for the given template and tile, grouping them by color.
+   * The result is stored in this.incorrectPixelMap, where each key is a color string "r,g,b"
+   * and the value is an array of [x, y] pixel coordinates (relative to the template origin).
+   * @param {Object} params
+   * @param {ImageBitmap} templateBitmap - The template bitmap for the tile
+   * @param {Uint8ClampedArray} tilePixels - The pixel data of the tile (from getImageData)
+   * @param {number} drawMult - The draw multiplier (block size)
+   * @param {number} offsetX - The X offset of the template in the tile
+   * @param {number} offsetY - The Y offset of the template in the tile
+   * @param {Set<string>} allowedColorsSet - Set of allowed palette color strings ("r,g,b")
+   */
+  #computeIncorrectPixels({ templateBitmap, tilePixels, drawMult, offsetX, offsetY, allowedColorsSet }) {
+
+    // Debugging: Log the allowed color sets
+    console.log("Allowed colors set:", allowedColorsSet);
+
+    // Clear out our map of incorrect pixels
+    this.incorrectPixelMap = new Map();
+
+    const w = templateBitmap.width;
+    const h = templateBitmap.height;
+    const drawSize = w; // Assumes templateBitmap is sized to drawSize, adjust if needed
+
+    // Get template bitmap pixel data
+    const tempCanvas = new OffscreenCanvas(w, h);
+    const tempContext = tempCanvas.getContext('2d', { willReadFrequently: true });
+    tempContext.imageSmoothingEnabled = false;
+    tempContext.clearRect(0, 0, w, h);
+    tempContext.drawImage(templateBitmap, 0, 0);
+    const tData = tempContext.getImageData(0, 0, w, h).data;
+
+    // Loop over all center pixels in the template
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if ((x % drawMult) !== 1 || (y % drawMult) !== 1) continue; // Skip non-center pixels where the template isn't drawn
+
+        const gx = x + offsetX;
+        const gy = y + offsetY;
+        if (gx < 0 || gy < 0 || gx >= drawSize || gy >= drawSize) continue; // Skip out-of-bounds pixels
+
+        const tIdx = (y * w + x) * 4;
+        const tr = tData[tIdx];
+        const tg = tData[tIdx + 1];
+        const tb = tData[tIdx + 2];
+        const ta = tData[tIdx + 3];
+
+        // Skip transparent template pixels
+        if (ta < 64) continue;
+
+        // Only consider allowed palette colors if provided
+        const colorKey = allowedColorsSet && allowedColorsSet.has(`${tr},${tg},${tb}`) ? `${tr},${tg},${tb}` : 'other';
+
+        // Get corresponding tile pixel
+        const tileIdx = (gy * drawSize + gx) * 4;
+        const pr = tilePixels[tileIdx];
+        const pg = tilePixels[tileIdx + 1];
+        const pb = tilePixels[tileIdx + 2];
+        const pa = tilePixels[tileIdx + 3];
+
+        // If tile pixel is transparent, skip (not painted)
+        if (pa < 64) continue;
+
+        // If the tile pixel does not match the template pixel color, mark as incorrect
+        if (pr !== tr || pg !== tg || pb !== tb) {
+          if (!this.incorrectPixelMap.has(colorKey)) this.incorrectPixelMap.set(colorKey, []);
+          this.incorrectPixelMap.get(colorKey).push([x, y]);
+        }
+      }
+    }
   }
 
   /** Imports the JSON object, and appends it to any JSON object already loaded
@@ -661,7 +768,8 @@ export default class TemplateManager {
                     const b = data[idx + 2];
                     const a = data[idx + 3];
                     if (a < 64) { continue; }
-                    if (r === 222 && g === 250 && b === 206) { continue; }
+                    if (r === 222 && g === 250 && b === 206) { continue; } 
+
                     requiredPixelCount++;
                     const key = activeTemplate.allowedColorsSet.has(`${r},${g},${b}`) ? `${r},${g},${b}` : 'other';
                     paletteMap.set(key, (paletteMap.get(key) || 0) + 1);
