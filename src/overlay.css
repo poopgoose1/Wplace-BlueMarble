@@ -9,8 +9,8 @@
   border-radius: 8px;
   z-index: 9000;
   transition: all 0.3s ease, transform 0s;
-  max-width: 300px;
-  width: auto;
+  max-width: 390px !important;
+  width: 390px !important;
   /* Performance optimizations for smooth dragging */
   will-change: transform;
   backface-visibility: hidden;
@@ -85,7 +85,7 @@ div#bm-overlay, div#bm-overlay-telemetry {
 /* Ensure overlay maintains consistent width when minimized */
 #bm-overlay[style*="padding: 5px"], #bm-overlay-telemetry[style*="padding: 5px"] {
   width: auto !important;
-  max-width: 300px;
+  max-width: 450px;
   min-width: 200px;
 }
 
