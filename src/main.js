@@ -414,7 +414,7 @@ function buildOverlayMain() {
       .addTextarea({'id': overlayMain.outputStatusId,
                     'placeholder': `Status: Sleeping...\nVersion: ${version}`, 
                     'readOnly': true,
-                    'style' : 'width: 380px;'}).buildElement();
+                    'style' : 'width: 370px;'}).buildElement();
   }
 
   function buildActionButtonsSection(overlayMain) {

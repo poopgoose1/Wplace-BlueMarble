@@ -565,38 +565,7 @@ export default class TemplateManager {
       const wrongStr = new Intl.NumberFormat().format(totalRequired - aggPainted); // Used to be aggWrong, but that is bugged
 
       ///// Create the string of incorrect pixels /////
-      /*
-      let maxPixelsToPrint = 5;
-      let tooManyIncorrect = (this.incorrectPixelList.length > maxPixelsToPrint);
-      let wrongPixelStr = "";
-      let numPixelsToPrint = tooManyIncorrect ? maxPixelsToPrint : this.incorrectPixelList.length;
-
-      //// DEBUGGING ////
-      console.log("Incorrect pixels", this.incorrectPixelList);
-
-      for(let i = 0; i < numPixelsToPrint; i++)
-      {
-
-          ///// Compute the global coordinates from the x-y offsets /////
-
-          // Start with the origin of the template
-          let coords = Array.from(this.templateCoords);
-
-          // Get the x and y offset of the incorrect pixel
-          let offsetX = Math.round(this.incorrectPixelList[i][0] / this.drawMult);
-          let offsetY = Math.round(this.incorrectPixelList[i][1] / this.drawMult);
-
-          // Convert to global coordinates
-          coords = convertToGlobalCoordinates(offsetX, offsetY, coords, this.tileSize);
-
-          wrongPixelStr = wrongPixelStr + "" + coords[0] + ", " + coords[1] + ", " + coords[2] + ", " + coords[3] + "\n";        
-      }
-      if(tooManyIncorrect)
-      {
-          wrongPixelStr = wrongPixelStr + "...and more\n";
-      }
-      */
-     let wrongPixelStr = "Next incorrect pixels:";
+     let wrongPixelStr = "Next incorrect pixels:\n";
 
      const activeTemplate = this.templatesArray?.[0]; // Get the first template
      const palette = activeTemplate?.colorPalette || {}; // Obtain the color palette of the template
@@ -626,10 +595,10 @@ export default class TemplateManager {
 
       ///// Update the display /////
       this.overlay.handleDisplayStatus(
-        `Displaying ${templateCount} template${templateCount == 1 ? '' : 's'}.\n
-        Painted ${paintedStr} / ${requiredStr} • Wrong ${wrongStr}\n
-        Wrong pixels:\n${wrongPixelStr}`
-      );
+        `Displaying ${templateCount} template${templateCount == 1 ? '' : 's'}.\n` +
+        `Painted ${paintedStr} / ${requiredStr} • Wrong ${wrongStr}\n` +
+        `\n${wrongPixelStr}`);
+
     } else {
       this.overlay.handleDisplayStatus(`Displaying ${templateCount} templates.`);
     }
@@ -666,10 +635,6 @@ export default class TemplateManager {
     tempContext.drawImage(templateBitmap, 0, 0);
     const tData = tempContext.getImageData(0, 0, w, h).data;
 
-    // A variable for debugging
-    let dbg = 0;
-    let dbgMax = 10;
-
     // Loop over all center pixels in the template
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
@@ -695,9 +660,6 @@ export default class TemplateManager {
         // Skip transparent template pixels
         if (ta < 64)
         {
-          if (dbg < dbgMax) {
-         //   console.log('3');
-          }
           continue;
         } 
 
@@ -714,9 +676,6 @@ export default class TemplateManager {
         // If tile pixel is transparent, skip (not painted)
         if (pa < 64)
         {
-          if (dbg < dbgMax) {
-         //   console.log('4');
-          }
           continue;
         } 
         
@@ -726,14 +685,6 @@ export default class TemplateManager {
           if (!this.incorrectPixelMap.has(colorKey)) this.incorrectPixelMap.set(colorKey, []);
           this.incorrectPixelMap.get(colorKey).push([x, y]);
         }
-        else
-        {
-          if (dbg < dbgMax) {
-        //    console.log('5');
-          }        
-        }
-
-        dbg++;
       }
     }
 
