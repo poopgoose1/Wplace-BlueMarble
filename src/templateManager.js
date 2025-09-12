@@ -688,8 +688,23 @@ export default class TemplateManager {
       }
     }
 
+    // After populating, sort the keys and the lists of [x, y] tuples
+    // 1. Sort each list of [x, y] by y, then x
+    for (const [colorKey, pixelList] of this.incorrectPixelMap.entries()) {
+      pixelList.sort((a, b) => (a[1] - b[1]) || (a[0] - b[0]));
+    }
+
+    // 2. Rebuild the map with sorted keys
+    const sortedEntries = Array.from(this.incorrectPixelMap.entries()).sort((a, b) => {
+      // Sort color keys as strings (lexicographically)
+      if (a[0] < b[0]) return -1;
+      if (a[0] > b[0]) return 1;
+      return 0;
+    });
+    this.incorrectPixelMap = new Map(sortedEntries);
+
     // Debugging: Log the incorrect pixel map
-    console.log("Computed incorrect pixel map:", this.incorrectPixelMap);
+    console.log("Computed incorrect pixel map (sorted):", this.incorrectPixelMap);
   }
 
   /** Imports the JSON object, and appends it to any JSON object already loaded
