@@ -343,10 +343,6 @@ export default class TemplateManager {
           const offsetX = Number(template.pixelCoords[0]) * this.drawMult;
           const offsetY = Number(template.pixelCoords[1]) * this.drawMult;
 
-          // DEBUGGING
-          console.log("TEMPLATE");
-          console.log(template);
-
           // For now, only a single template is enabled. So we can compute our incorrect pixels here, and not
           // have to worry about the for loop iterating again and re-computing the map. If we enable multiple templates,
           // this logic will need to be updated to also filter out pixels by template in addition to color.
@@ -600,8 +596,33 @@ export default class TemplateManager {
           wrongPixelStr = wrongPixelStr + "...and more\n";
       }
       */
-     let wrongPixelStr = "TODO";
+     let wrongPixelStr = "Next incorrect pixels:";
 
+     const activeTemplate = this.templatesArray?.[0]; // Get the first template
+     const palette = activeTemplate?.colorPalette || {}; // Obtain the color palette of the template
+
+     // Get all colors in the palette that are enabled
+     const enabledColors = Object.entries(palette) // [ [ "r,g,b", { count, enabled, name } ], ... ]
+        .filter(([, { enabled }]) => enabled)
+        .map(([color]) => color);
+
+      // For each enabled color, get the human-readable name and the first incorrect pixels, if there is one
+      for (const colorKey of enabledColors) {
+        const colorName = activeTemplate.rgbToMeta.get(colorKey)?.name || colorKey;
+
+        const incorrectPixels = this.incorrectPixelMap.get(colorKey) || [];
+        if (incorrectPixels.length === 0) { continue; } // Skip colors with no incorrect pixels
+
+        // Get the first incorrect pixel
+        const [x, y] = incorrectPixels[0];
+
+        // Compute global coordinates
+        let coords = Array.from(this.templateCoords);
+        const offsetX = Math.floor(x / this.drawMult);
+        const offsetY = Math.floor(y / this.drawMult);
+        coords = convertToGlobalCoordinates(offsetX, offsetY, coords, this.tileSize);
+        wrongPixelStr += `${colorName}: ${coords[0]}, ${coords[1]}, ${coords[2]}, ${coords[3]}\n`;
+      }
 
       ///// Update the display /////
       this.overlay.handleDisplayStatus(

@@ -5,7 +5,7 @@
   "homepage": "https://bluemarble.lol/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/SwingTheVine/Wplace-BlueMarble.git"
+    "url": "https://github.com/poopgoose1/Wplace-BlueMarble.git"
   },
   "scripts": {
     "build": "node build/build.js",

@@ -411,7 +411,10 @@ function buildOverlayMain() {
           }
         }).buildElement()
       .buildElement()
-      .addTextarea({'id': overlayMain.outputStatusId, 'placeholder': `Status: Sleeping...\nVersion: ${version}`, 'readOnly': true}).buildElement();
+      .addTextarea({'id': overlayMain.outputStatusId,
+                    'placeholder': `Status: Sleeping...\nVersion: ${version}`, 
+                    'readOnly': true,
+                    'style' : 'width: 380px;'}).buildElement();
   }
 
   function buildActionButtonsSection(overlayMain) {
@@ -521,7 +524,7 @@ function buildOverlayMain() {
   }
 
   // --- Main Overlay Assembly ---
-  overlayMain.addDiv({'id': 'bm-overlay', 'style': 'top: 10px; right: 75px;'});
+  overlayMain.addDiv({'id': 'bm-overlay', 'style': 'top: 10px; right: 75px; width: 390px;'});
   buildHeaderSection(overlayMain, name);
   overlayMain.addHr().buildElement();
   buildUserInfoSection(overlayMain);
