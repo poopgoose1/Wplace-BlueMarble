@@ -630,15 +630,12 @@ export default class TemplateManager {
    */
   #computeIncorrectPixels({ templateBitmap, tilePixels, drawMult, offsetX, offsetY, allowedColorsSet }) {
 
-    // Debugging: Log the allowed color sets
-    console.log("Allowed colors set:", allowedColorsSet);
-
     // Clear out our map of incorrect pixels
     this.incorrectPixelMap = new Map();
 
     const w = templateBitmap.width;
     const h = templateBitmap.height;
-    const drawSize = w; // Assumes templateBitmap is sized to drawSize, adjust if needed
+    const drawSize = this.tileSize * this.drawMult; // Calculate draw multiplier for scaling
 
     // Get template bitmap pixel data
     const tempCanvas = new OffscreenCanvas(w, h);
@@ -648,14 +645,25 @@ export default class TemplateManager {
     tempContext.drawImage(templateBitmap, 0, 0);
     const tData = tempContext.getImageData(0, 0, w, h).data;
 
+    // A variable for debugging
+    let dbg = 0;
+    let dbgMax = 10;
+
     // Loop over all center pixels in the template
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
-        if ((x % drawMult) !== 1 || (y % drawMult) !== 1) continue; // Skip non-center pixels where the template isn't drawn
+
+        if ((x % drawMult) !== 1 || (y % drawMult) !== 1)
+        {
+          continue; // Skip non-center pixels where the template isn't drawn
+        }
 
         const gx = x + offsetX;
         const gy = y + offsetY;
-        if (gx < 0 || gy < 0 || gx >= drawSize || gy >= drawSize) continue; // Skip out-of-bounds pixels
+        if (gx < 0 || gy < 0 || gx >= drawSize || gy >= drawSize)
+        {
+          continue; // Skip out-of-bounds pixels
+        }
 
         const tIdx = (y * w + x) * 4;
         const tr = tData[tIdx];
@@ -664,7 +672,13 @@ export default class TemplateManager {
         const ta = tData[tIdx + 3];
 
         // Skip transparent template pixels
-        if (ta < 64) continue;
+        if (ta < 64)
+        {
+          if (dbg < dbgMax) {
+         //   console.log('3');
+          }
+          continue;
+        } 
 
         // Only consider allowed palette colors if provided
         const colorKey = allowedColorsSet && allowedColorsSet.has(`${tr},${tg},${tb}`) ? `${tr},${tg},${tb}` : 'other';
@@ -677,15 +691,33 @@ export default class TemplateManager {
         const pa = tilePixels[tileIdx + 3];
 
         // If tile pixel is transparent, skip (not painted)
-        if (pa < 64) continue;
-
+        if (pa < 64)
+        {
+          if (dbg < dbgMax) {
+         //   console.log('4');
+          }
+          continue;
+        } 
+        
         // If the tile pixel does not match the template pixel color, mark as incorrect
-        if (pr !== tr || pg !== tg || pb !== tb) {
+        if (pr !== tr || pg !== tg || pb !== tb)
+        {
           if (!this.incorrectPixelMap.has(colorKey)) this.incorrectPixelMap.set(colorKey, []);
           this.incorrectPixelMap.get(colorKey).push([x, y]);
         }
+        else
+        {
+          if (dbg < dbgMax) {
+        //    console.log('5');
+          }        
+        }
+
+        dbg++;
       }
     }
+
+    // Debugging: Log the incorrect pixel map
+    console.log("Computed incorrect pixel map:", this.incorrectPixelMap);
   }
 
   /** Imports the JSON object, and appends it to any JSON object already loaded
