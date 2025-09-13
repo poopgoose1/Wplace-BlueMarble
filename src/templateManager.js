@@ -34,6 +34,16 @@ import { base64ToUint8, numberToEncoded, convertToGlobalCoordinates} from "./uti
  *   }
  * }
  */
+
+// Define an enum to classify pixel states
+const PixelState = {
+  CORRECT: 'correct',
+  INCORRECT: 'incorrect',
+  EMPTY: 'empty',
+  IGNORE: 'ignore' // For pixels that are out of bounds, etc.
+};
+
+
 export default class TemplateManager {
 
   /** The constructor for the {@link TemplateManager} class.
@@ -68,8 +78,13 @@ export default class TemplateManager {
 
     // A map of incorrect pixels, based on their color, so that we can display the incorrect pixels
     // for any activated colors
-    // Keys: 
     this.incorrectPixelMap = new Map();
+
+    // A map of pixels, based on color, that are not painted at all (empty)
+    this.unpaintedPixelMap = new Map();
+
+    // A map of correct pixels, based on their color
+    this.correctPixelMap = new Map();
 
   }
 
@@ -363,58 +378,55 @@ export default class TemplateManager {
         offsetY: offsetY,
         allowedColorsSet: template.allowedColorsSet};
 
-      this.#computeIncorrectPixels(params);
+      this.#computePixelStates(params);
 
-      // DEBUGGING: Print the incorrect pixel map
-      console.log("Incorrect pixel map:");
-      console.log(this.incorrectPixelMap);
 
-          // Loops over all pixels in the template
-          // Assigns each pixel a color (if center pixel)
-          for (let y = 0; y < tempHeight; y++) {
-            for (let x = 0; x < tempWidth; x++) {
-              // Purpose: Count which pixels are painted correctly???
+      // Loops over all pixels in the template
+      // Assigns each pixel a color (if center pixel)
+      for (let y = 0; y < tempHeight; y++) {
+        for (let x = 0; x < tempWidth; x++) {
+          // Purpose: Count which pixels are painted correctly???
 
-              // Only evaluate the center pixel of each shread block
-              // Skip if not the center pixel of the shread block
-              if ((x % this.drawMult) !== 1 || (y % this.drawMult) !== 1) { continue; }
+          // Only evaluate the center pixel of each shread block
+          // Skip if not the center pixel of the shread block
+          if ((x % this.drawMult) !== 1 || (y % this.drawMult) !== 1) { continue; }
 
-              const gx = x + offsetX;
-              const gy = y + offsetY;
+          const gx = x + offsetX;
+          const gy = y + offsetY;
 
-              // IF the pixel is out of bounds of the template, OR if the pixel is outside of the tile, then skip the pixel
-              if (gx < 0 || gy < 0 || gx >= drawSize || gy >= drawSize) { continue; }
+          // IF the pixel is out of bounds of the template, OR if the pixel is outside of the tile, then skip the pixel
+          if (gx < 0 || gy < 0 || gx >= drawSize || gy >= drawSize) { continue; }
 
-              const templatePixelCenter = (y * tempWidth + x) * 4; // Shread block center pixel
-              const templatePixelCenterRed = tData[templatePixelCenter]; // Shread block's center pixel's RED value
-              const templatePixelCenterGreen = tData[templatePixelCenter + 1]; // Shread block's center pixel's GREEN value
-              const templatePixelCenterBlue = tData[templatePixelCenter + 2]; // Shread block's center pixel's BLUE value
-              const templatePixelCenterAlpha = tData[templatePixelCenter + 3]; // Shread block's center pixel's ALPHA value
+          const templatePixelCenter = (y * tempWidth + x) * 4; // Shread block center pixel
+          const templatePixelCenterRed = tData[templatePixelCenter]; // Shread block's center pixel's RED value
+          const templatePixelCenterGreen = tData[templatePixelCenter + 1]; // Shread block's center pixel's GREEN value
+          const templatePixelCenterBlue = tData[templatePixelCenter + 2]; // Shread block's center pixel's BLUE value
+          const templatePixelCenterAlpha = tData[templatePixelCenter + 3]; // Shread block's center pixel's ALPHA value
 
-              // Possibly needs to be removed 
-              // Handle template transparent pixel (alpha < 64): wrong if board has any site palette color here
-              // If the alpha of the center pixel is less than 64...
-              if (templatePixelCenterAlpha < 64) {
-                try {
-                  const activeTemplate = this.templatesArray?.[0];
-                  const tileIdx = (gy * drawSize + gx) * 4;
-                  const pr = tilePixels[tileIdx];
-                  const pg = tilePixels[tileIdx + 1];
-                  const pb = tilePixels[tileIdx + 2];
-                  const pa = tilePixels[tileIdx + 3];
+          // Possibly needs to be removed 
+          // Handle template transparent pixel (alpha < 64): wrong if board has any site palette color here
+          // If the alpha of the center pixel is less than 64...
+          if (templatePixelCenterAlpha < 64) {
+            try {
+              const activeTemplate = this.templatesArray?.[0];
+              const tileIdx = (gy * drawSize + gx) * 4;
+              const pr = tilePixels[tileIdx];
+              const pg = tilePixels[tileIdx + 1];
+              const pb = tilePixels[tileIdx + 2];
+              const pa = tilePixels[tileIdx + 3];
 
-                  const key = activeTemplate.allowedColorsSet.has(`${pr},${pg},${pb}`) ? `${pr},${pg},${pb}` : 'other';
+              const key = activeTemplate.allowedColorsSet.has(`${pr},${pg},${pb}`) ? `${pr},${pg},${pb}` : 'other';
 
-                  const isSiteColor = activeTemplate?.allowedColorsSet ? activeTemplate.allowedColorsSet.has(key) : false;
-                  
-                  // IF the alpha of the center pixel that is placed on the canvas is greater than or equal to 64, AND the pixel is a Wplace palette color, then it is incorrect.
-                  if (pa >= 64 && isSiteColor) {
-                    wrongCount++;
-                  }
-                } catch (ignored) {}
-
-                continue; // Continue to the next pixel
+              const isSiteColor = activeTemplate?.allowedColorsSet ? activeTemplate.allowedColorsSet.has(key) : false;
+              
+              // IF the alpha of the center pixel that is placed on the canvas is greater than or equal to 64, AND the pixel is a Wplace palette color, then it is incorrect.
+              if (pa >= 64 && isSiteColor) {
+                wrongCount++;
               }
+            } catch (ignored) {}
+
+            continue; // Continue to the next pixel
+          }
 
               // Treat #deface as Transparent palette color (required and paintable)
               // Ignore non-palette colors (match against allowed set when available) for counting required template pixels
@@ -606,8 +618,50 @@ export default class TemplateManager {
     return await canvas.convertToBlob({ type: 'image/png' });
   }
 
+  /** Computes the state of a single pixel */
+  #computePixelState(x, y, w, h, tData, tilePixels, drawSize, offsetX, offsetY, allowedColorsSet) {
+    const gx = x + offsetX;
+    const gy = y + offsetY;
+    if (gx < 0 || gy < 0 || gx >= drawSize || gy >= drawSize) {
+      return { pixelState: PixelState.IGNORE, colorKey: null };
+    }
+
+    const tIdx = (y * w + x) * 4;
+    const tr = tData[tIdx];
+    const tg = tData[tIdx + 1];
+    const tb = tData[tIdx + 2];
+    const ta = tData[tIdx + 3];
+
+    // Ignore transparent template pixels
+    if (ta < 64) {
+      return { pixelState: PixelState.IGNORE, colorKey: null };
+    }
+
+    // Only consider allowed palette colors if provided
+    const colorKey = allowedColorsSet && allowedColorsSet.has(`${tr},${tg},${tb}`) ? `${tr},${tg},${tb}` : 'other';
+
+    // Get corresponding tile pixel
+    const tileIdx = (gy * drawSize + gx) * 4;
+    const pr = tilePixels[tileIdx];  // Red
+    const pg = tilePixels[tileIdx + 1]; // Green  
+    const pb = tilePixels[tileIdx + 2]; // Blue
+    const pa = tilePixels[tileIdx + 3]; // Alpha
+
+    if (pa < 64) { // The pixel is unpainted (transparency) TODO: TEST THIS
+      return { pixelState: PixelState.EMPTY, colorKey };
+    }
+
+    // If the tile pixel does not match the template pixel color, then it's incorrect
+    if (pr !== tr || pg !== tg || pb !== tb) {
+      return { pixelState: PixelState.INCORRECT, colorKey };
+    }
+
+    // If correct, return correct state and colorKey
+    return { pixelState: PixelState.CORRECT, colorKey };
+  }
+
   /**
-   * Computes the incorrect pixels for the given template and tile, grouping them by color.
+   * Computes the states of all pixels for the given template and tile, grouping them by color.
    * The result is stored in this.incorrectPixelMap, where each key is a color string "r,g,b"
    * and the value is an array of [x, y] pixel coordinates (relative to the template origin).
    * @param {Object} params
@@ -618,10 +672,16 @@ export default class TemplateManager {
    * @param {number} offsetY - The Y offset of the template in the tile
    * @param {Set<string>} allowedColorsSet - Set of allowed palette color strings ("r,g,b")
    */
-  #computeIncorrectPixels({ templateBitmap, tilePixels, drawMult, offsetX, offsetY, allowedColorsSet }) {
+  #computePixelStates({ templateBitmap, tilePixels, drawMult, offsetX, offsetY, allowedColorsSet }) {
 
     // Clear out our map of incorrect pixels
     this.incorrectPixelMap = new Map();
+
+    // Clear out our map of unpainted pixels
+    this.unpaintedPixelMap = new Map();
+
+    // Clear out our map of correct pixels
+    this.correctPixelMap = new Map();
 
     const w = templateBitmap.width;
     const h = templateBitmap.height;
@@ -635,55 +695,23 @@ export default class TemplateManager {
     tempContext.drawImage(templateBitmap, 0, 0);
     const tData = tempContext.getImageData(0, 0, w, h).data;
 
-    // Loop over all center pixels in the template
+    // Loop over all center pixels in the template and compute their states. Add them to the appropriate map
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
-
-        if ((x % drawMult) !== 1 || (y % drawMult) !== 1)
-        {
-          continue; // Skip non-center pixels where the template isn't drawn
-        }
-
-        const gx = x + offsetX;
-        const gy = y + offsetY;
-        if (gx < 0 || gy < 0 || gx >= drawSize || gy >= drawSize)
-        {
-          continue; // Skip out-of-bounds pixels
-        }
-
-        const tIdx = (y * w + x) * 4;
-        const tr = tData[tIdx];
-        const tg = tData[tIdx + 1];
-        const tb = tData[tIdx + 2];
-        const ta = tData[tIdx + 3];
-
-        // Skip transparent template pixels
-        if (ta < 64)
-        {
-          continue;
-        } 
-
-        // Only consider allowed palette colors if provided
-        const colorKey = allowedColorsSet && allowedColorsSet.has(`${tr},${tg},${tb}`) ? `${tr},${tg},${tb}` : 'other';
-
-        // Get corresponding tile pixel
-        const tileIdx = (gy * drawSize + gx) * 4;
-        const pr = tilePixels[tileIdx];
-        const pg = tilePixels[tileIdx + 1];
-        const pb = tilePixels[tileIdx + 2];
-        const pa = tilePixels[tileIdx + 3];
-
-        // If tile pixel is transparent, skip (not painted)
-        if (pa < 64)
-        {
-          continue;
-        } 
-        
-        // If the tile pixel does not match the template pixel color, mark as incorrect
-        if (pr !== tr || pg !== tg || pb !== tb)
-        {
-          if (!this.incorrectPixelMap.has(colorKey)) this.incorrectPixelMap.set(colorKey, []);
-          this.incorrectPixelMap.get(colorKey).push([x, y]);
+        const { pixelState, colorKey } = this.#computePixelState(x, y, w, h, tData, tilePixels, drawSize, offsetX, offsetY, allowedColorsSet);
+        switch (pixelState) {
+          case PixelState.INCORRECT:
+            if (!this.incorrectPixelMap.has(colorKey)) this.incorrectPixelMap.set(colorKey, []);
+            this.incorrectPixelMap.get(colorKey).push([x, y]);
+            break;
+          case PixelState.EMPTY:
+            if (!this.unpaintedPixelMap.has(colorKey)) this.unpaintedPixelMap.set(colorKey, []);
+            this.unpaintedPixelMap.get(colorKey).push([x, y]);
+            break;
+          case PixelState.CORRECT:
+            if (!this.correctPixelMap.has(colorKey)) this.correctPixelMap.set(colorKey, []);
+            this.correctPixelMap.get(colorKey).push([x, y]);
+            break;
         }
       }
     }
@@ -693,18 +721,26 @@ export default class TemplateManager {
     for (const [colorKey, pixelList] of this.incorrectPixelMap.entries()) {
       pixelList.sort((a, b) => (a[1] - b[1]) || (a[0] - b[0]));
     }
+    for (const [colorKey, pixelList] of this.unpaintedPixelMap.entries()) {
+      pixelList.sort((a, b) => (a[1] - b[1]) || (a[0] - b[0]));
+    }
+    for (const [colorKey, pixelList] of this.correctPixelMap.entries()) {
+      pixelList.sort((a, b) => (a[1] - b[1]) || (a[0] - b[0]));
+    } 
 
-    // 2. Rebuild the map with sorted keys
-    const sortedEntries = Array.from(this.incorrectPixelMap.entries()).sort((a, b) => {
-      // Sort color keys as strings (lexicographically)
-      if (a[0] < b[0]) return -1;
-      if (a[0] > b[0]) return 1;
-      return 0;
-    });
-    this.incorrectPixelMap = new Map(sortedEntries);
+    // 2. Rebuild the maps with sorted keys
+    const sortMapByKey = (map) => {
+      const sortedEntries = Array.from(map.entries()).sort((a, b) => {
+        if (a[0] < b[0]) return -1;
+        if (a[0] > b[0]) return 1;
+        return 0;
+      });
+      return new Map(sortedEntries);
+    };
 
-    // Debugging: Log the incorrect pixel map
-    console.log("Computed incorrect pixel map (sorted):", this.incorrectPixelMap);
+    this.incorrectPixelMap = sortMapByKey(this.incorrectPixelMap);
+    this.unpaintedPixelMap = sortMapByKey(this.unpaintedPixelMap);
+    this.correctPixelMap = sortMapByKey(this.correctPixelMap);
   }
 
   /** Imports the JSON object, and appends it to any JSON object already loaded
