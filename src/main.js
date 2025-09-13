@@ -411,10 +411,7 @@ function buildOverlayMain() {
           }
         }).buildElement()
       .buildElement()
-      .addTextarea({'id': overlayMain.outputStatusId,
-                    'placeholder': `Status: Sleeping...\nVersion: ${version}`, 
-                    'readOnly': true,
-                    'style' : 'width: 370px;'}).buildElement();
+      .addTextarea({'id': overlayMain.outputStatusId, 'placeholder': `Status: Sleeping...\nVersion: ${version}`, 'readOnly': true}).buildElement();
   }
 
   function buildActionButtonsSection(overlayMain) {
@@ -524,7 +521,7 @@ function buildOverlayMain() {
   }
 
   // --- Main Overlay Assembly ---
-  overlayMain.addDiv({'id': 'bm-overlay', 'style': 'top: 10px; right: 75px; width: 390px;'});
+  overlayMain.addDiv({'id': 'bm-overlay', 'style': 'top: 10px; right: 75px;'});
   buildHeaderSection(overlayMain, name);
   overlayMain.addHr().buildElement();
   buildUserInfoSection(overlayMain);
@@ -559,7 +556,15 @@ function buildOverlayMain() {
       swatch.style.border = '1px solid rgba(255,255,255,0.5)';
       let label = document.createElement('span');
       label.style.fontSize = '12px';
+
+      // The overall number of pixels required pixels for the color, as a human-readable string
+      let totalPixelStr = `${meta.count.toLocaleString()}`;
       let labelText = `${meta.count.toLocaleString()}`;
+
+      // DEBUGGING: Print the RGB value
+      console.log(`Color filter entry: ${rgb}`);
+
+
       if (rgb === 'other') {
         swatch.style.background = '#888';
         labelText = `Other • ${labelText}`;
@@ -568,6 +573,23 @@ function buildOverlayMain() {
         labelText = `Transparent • ${labelText}`;
       } else {
         const [r, g, b] = rgb.split(',').map(Number);
+
+        // Also add the number of correct pixels to the label
+        let correctPixelStr = '0';
+        try {
+
+          // DEBUGGING
+          console.log('1');
+          const tMeta = templateManager.getCorrectPixelCount(r, g, b);
+          if (tMeta && typeof tMeta.id === 'number') {
+            correctPixelStr = `${tMeta.correctCount.toLocaleString()}`;
+          }
+          console.log('2');
+
+        } catch (ignored) {}
+        labelText = `${correctPixelStr} / ${totalPixelStr}`;
+
+        // Set the swatch color
         swatch.style.background = `rgb(${r},${g},${b})`;
         try {
           const tMeta = templateManager.templatesArray?.[0]?.rgbToMeta?.get(rgb);

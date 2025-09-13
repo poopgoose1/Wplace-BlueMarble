@@ -226,6 +226,14 @@ export default class TemplateManager {
 
   }
 
+  /** 
+   * Returns the number of correct pixels for the given rgb color, using correctPixelMap
+   */
+  getCorrectPixelCount(r, g, b) {
+    const key = `${r},${g},${b}`;
+    return this.correctPixelMap.get(key) || 0;
+  }
+
   /** Disables the template from view
    */
   async disableTemplate() {
