@@ -577,16 +577,13 @@ function buildOverlayMain() {
         // Also add the number of correct pixels to the label
         let correctPixelStr = '0';
         try {
-
-          // DEBUGGING
-          console.log('1');
-          const tMeta = templateManager.getCorrectPixelCount(r, g, b);
-          if (tMeta && typeof tMeta.id === 'number') {
-            correctPixelStr = `${tMeta.correctCount.toLocaleString()}`;
-          }
-          console.log('2');
-
-        } catch (ignored) {}
+          console.log(`Getting correct pixel count for ${rgb}`);
+          const numCorrect = templateManager.getCorrectPixelCount(r, g, b);
+          correctPixelStr = `${numCorrect.toLocaleString()}`;
+        }
+         catch (ignored) {
+          console.error(`Error getting correct pixel count for ${rgb}:`, ignored);
+        }
         labelText = `${correctPixelStr} / ${totalPixelStr}`;
 
         // Set the swatch color

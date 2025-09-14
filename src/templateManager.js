@@ -230,8 +230,17 @@ export default class TemplateManager {
    * Returns the number of correct pixels for the given rgb color, using correctPixelMap
    */
   getCorrectPixelCount(r, g, b) {
+
     const key = `${r},${g},${b}`;
-    return this.correctPixelMap.get(key) || 0;
+
+    // DEBUGGING
+    console.log("getCorrectPixelCount: Correct Pixel Map Size: " + this.correctPixelMap.size);
+
+    // Get the list of correct pixels for this color
+    let correctPixels = this.correctPixelMap.get(key) || [];
+
+    // Return the size of the list
+    return correctPixels.length;
   }
 
   /** Disables the template from view
@@ -749,6 +758,9 @@ export default class TemplateManager {
     this.incorrectPixelMap = sortMapByKey(this.incorrectPixelMap);
     this.unpaintedPixelMap = sortMapByKey(this.unpaintedPixelMap);
     this.correctPixelMap = sortMapByKey(this.correctPixelMap);
+
+    // DEBUGGING: Print the size of the correct pixel map
+    console.log("ComputePixelStates: Correct Pixel Map Size: " + this.correctPixelMap.size);
   }
 
   /** Imports the JSON object, and appends it to any JSON object already loaded
