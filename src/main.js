@@ -293,7 +293,7 @@ function buildOverlayMain() {
       }
       ).buildElement()
       .addHeader(1, {'textContent': name}).buildElement()
-      .addP({'textContent': 'PoopGoose variant', 'style': 'margin: 0; font-size: 0.95em; color: #aaa;'}).buildElement()
+      .addP({'textContent': 'PoopGoose Edition', 'style': 'margin: 0; font-size: 0.95em; color: #aaa;'}).buildElement()
       .buildElement();
   }
 
@@ -560,10 +560,6 @@ function buildOverlayMain() {
       // The overall number of pixels required pixels for the color, as a human-readable string
       let totalPixelStr = `${meta.count.toLocaleString()}`;
       let labelText = `${meta.count.toLocaleString()}`;
-
-      // DEBUGGING: Print the RGB value
-      console.log(`Color filter entry: ${rgb}`);
-
 
       if (rgb === 'other') {
         swatch.style.background = '#888';
