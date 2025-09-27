@@ -408,6 +408,9 @@ function buildOverlayMain() {
           button.onclick = () => {
             instance.apiManager?.templateManager?.togglePreviewMode();
             instance.handleDisplayStatus(`Previewing template!`);
+
+            // Change the button text from 'Preview' to 'Template'
+            button.textContent = instance.apiManager?.templateManager?.isPreviewMode() ? 'Template' : 'Preview';
           }
         }).buildElement()
         .addButton({'id': 'bm-button-disable', 'textContent': 'Disable'}, (instance, button) => {

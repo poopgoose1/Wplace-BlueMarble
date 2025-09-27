@@ -131,6 +131,8 @@ export default class TemplateManager {
     return this.canvasTemplate; // Return the new canvas
   }
 
+
+
   /** Creates the JSON object to store templates in
    * @returns {{ whoami: string, scriptVersion: string, schemaVersion: string, templates: Object }} The JSON object
    * @since 0.65.4
@@ -227,6 +229,11 @@ export default class TemplateManager {
    */
   deleteTemplate() {
 
+  }
+
+  isPreviewMode() // Returns a boolean indicating if we are in preview mode
+  {
+    return this.previewMode;
   }
 
   /** 
