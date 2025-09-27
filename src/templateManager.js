@@ -169,7 +169,7 @@ export default class TemplateManager {
       coords: coords
     });
     //template.chunked = await template.createTemplateTiles(this.tileSize); // Chunks the tiles
-    const { templateTiles, templateTilesBuffers } = await template.createTemplateTiles(this.tileSize); // Chunks the tiles
+    const { templateTiles, templateTilesBuffers } = await template.createTemplateTiles(this.tileSize, this.previewMode); // Chunks the tiles
     template.chunked = templateTiles; // Stores the chunked tile bitmaps
 
     // Appends a child into the templates object
@@ -266,10 +266,10 @@ export default class TemplateManager {
 
     let drawSize = this.tileSize * this.drawMult; // Calculate draw multiplier for scaling
 
-    if(this.previewMode)
-    {
-      drawSize = this.tileSize; // In preview mode, we draw at normal size
-    }
+    //if(this.previewMode)
+    //{
+    //  drawSize = this.tileSize; // In preview mode, we draw at normal size
+    //}
     
 
     // Format tile coordinates with proper padding for consistent lookup
