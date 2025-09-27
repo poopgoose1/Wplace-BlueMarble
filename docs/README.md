@@ -136,8 +136,15 @@
   <img alt="Showcase image of Blue Marble template" src="./assets/Showcase1.png">
   <h2 id="about-the-poopgoose-variant">About the PoopGoose Variant</h2>
   <p>
-    The PoopGoose variant of Blue Marble is a customized fork of the original project. Right now, it only contains a single additional feature,
-    which is displaying the coordinates of incorrectly-painted pixels to help the user find them more easily. This list of features may grow in the future.
+    The PoopGoose variant of Blue Marble is a customized fork of the original project. 
+  </p>
+  <p>
+    Additional features:
+    <ul>
+    <li>Displays the coordinates of incorrectly-painted pixels to help the user find them more easily</li>
+    <li>Displays the number of pixels remaining independently for each color</li>
+    <li>Adds a 'Preview Mode', which shows what finished template will look like</li>
+    </ul>
   </p>
   <p>
     If you find any issues specific to this variant, please open them on the <a href="https://github.com/poopgoose1/Wplace-BlueMarble/issues">PoopGoose1 GitHub Issues page</a> rather than the original SwingTheVine repository.
