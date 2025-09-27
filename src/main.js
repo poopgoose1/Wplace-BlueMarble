@@ -404,6 +404,29 @@ function buildOverlayMain() {
             instance.handleDisplayStatus(`Drew to canvas!`);
           }
         }).buildElement()
+        .addButton({'id': 'bm-button-move', 'textContent': 'Preview'}, (instance, button) => {
+          button.onclick = () => {
+            instance.apiManager?.templateManager?.togglePreviewMode();
+            instance.handleDisplayStatus(`Previewing template!`);
+
+            // Change the button text from 'Preview' to 'Template'
+            button.textContent = instance.apiManager?.templateManager?.isPreviewMode() ? 'Template' : 'Preview';
+
+            // Re-create the template for the new mode
+            const input = document.querySelector('#bm-input-file-template');
+            const coordTlX = document.querySelector('#bm-input-tx');
+            if (!coordTlX.checkValidity()) {coordTlX.reportValidity(); instance.handleDisplayError('Coordinates are malformed! Did you try clicking on the canvas first?'); return;}
+            const coordTlY = document.querySelector('#bm-input-ty');
+            if (!coordTlY.checkValidity()) {coordTlY.reportValidity(); instance.handleDisplayError('Coordinates are malformed! Did you try clicking on the canvas first?'); return;}
+            const coordPxX = document.querySelector('#bm-input-px');
+            if (!coordPxX.checkValidity()) {coordPxX.reportValidity(); instance.handleDisplayError('Coordinates are malformed! Did you try clicking on the canvas first?'); return;}
+            const coordPxY = document.querySelector('#bm-input-py');
+            if (!coordPxY.checkValidity()) {coordPxY.reportValidity(); instance.handleDisplayError('Coordinates are malformed! Did you try clicking on the canvas first?'); return;}
+            if (!input?.files[0]) {instance.handleDisplayError(`No file selected!`); return;}
+            templateManager.createTemplate(input.files[0], input.files[0]?.name.replace(/\.[^/.]+$/, ''), [Number(coordTlX.value), Number(coordTlY.value), Number(coordPxX.value), Number(coordPxY.value)]);
+            instance.handleDisplayStatus(`Drew to canvas!`);
+          }
+        }).buildElement()
         .addButton({'id': 'bm-button-disable', 'textContent': 'Disable'}, (instance, button) => {
           button.onclick = () => {
             instance.apiManager?.templateManager?.setTemplatesShouldBeDrawn(false);

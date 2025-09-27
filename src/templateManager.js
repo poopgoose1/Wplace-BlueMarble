@@ -86,6 +86,9 @@ export default class TemplateManager {
     // A map of correct pixels, based on their color
     this.correctPixelMap = new Map();
 
+    // Whether or not we are in preview mode
+    this.previewMode = false;
+
   }
 
   /** Retrieves the pixel art canvas.
@@ -128,6 +131,8 @@ export default class TemplateManager {
     return this.canvasTemplate; // Return the new canvas
   }
 
+
+
   /** Creates the JSON object to store templates in
    * @returns {{ whoami: string, scriptVersion: string, schemaVersion: string, templates: Object }} The JSON object
    * @since 0.65.4
@@ -166,7 +171,7 @@ export default class TemplateManager {
       coords: coords
     });
     //template.chunked = await template.createTemplateTiles(this.tileSize); // Chunks the tiles
-    const { templateTiles, templateTilesBuffers } = await template.createTemplateTiles(this.tileSize); // Chunks the tiles
+    const { templateTiles, templateTilesBuffers } = await template.createTemplateTiles(this.tileSize, this.previewMode); // Chunks the tiles
     template.chunked = templateTiles; // Stores the chunked tile bitmaps
 
     // Appends a child into the templates object
@@ -226,6 +231,11 @@ export default class TemplateManager {
 
   }
 
+  isPreviewMode() // Returns a boolean indicating if we are in preview mode
+  {
+    return this.previewMode;
+  }
+
   /** 
    * Returns the number of correct pixels for the given rgb color, using correctPixelMap
    */
@@ -261,7 +271,13 @@ export default class TemplateManager {
     // Returns early if no templates should be drawn
     if (!this.templatesShouldBeDrawn) {return tileBlob;}
 
-    const drawSize = this.tileSize * this.drawMult; // Calculate draw multiplier for scaling
+    let drawSize = this.tileSize * this.drawMult; // Calculate draw multiplier for scaling
+
+    //if(this.previewMode)
+    //{
+    //  drawSize = this.tileSize; // In preview mode, we draw at normal size
+    //}
+    
 
     // Format tile coordinates with proper padding for consistent lookup
     tileCoords = tileCoords[0].toString().padStart(4, '0') + ',' + tileCoords[1].toString().padStart(4, '0');
@@ -896,5 +912,11 @@ export default class TemplateManager {
    */
   setTemplatesShouldBeDrawn(value) {
     this.templatesShouldBeDrawn = value;
+  }
+
+  /** Toggles preview mode */
+  togglePreviewMode() 
+  {
+    this.previewMode = !this.previewMode; 
   }
 }

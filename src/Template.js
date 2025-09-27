@@ -89,10 +89,11 @@ export default class Template {
    * @returns {Object} Collection of template bitmaps & buffers organized by tile coordinates
    * @since 0.65.4
    */
-  async createTemplateTiles() {
+  async createTemplateTiles(tileSize, previewMode = false)
+  {
     console.log('Template coordinates:', this.coords);
 
-    const shreadSize = 3; // Scale image factor for pixel art enhancement (must be odd)
+    let shreadSize = 3; // Scale image factor for pixel art enhancement (must be odd)
     const bitmap = await createImageBitmap(this.file); // Create efficient bitmap from uploaded file
     const imageWidth = bitmap.width;
     const imageHeight = bitmap.height;
@@ -207,7 +208,7 @@ export default class Template {
         for (let y = 0; y < canvasHeight; y++) {
           for (let x = 0; x < canvasWidth; x++) {
             // For every pixel...
-            const pixelIndex = (y * canvasWidth + x) * 4; // Find the pixel index in an array where every 4 indexes are 1 pixel
+            const pixelIndex = (y * canvasWidth + x) * 4; // Find the pixel index in an array where every 4 indexes are 1 pixel (r,g,b,a)
             // If the pixel is the color #deface, draw a translucent gray checkerboard pattern
             if (
               imageData.data[pixelIndex] === 222 &&
@@ -224,7 +225,9 @@ export default class Template {
                 imageData.data[pixelIndex + 2] = 255;
               }
               imageData.data[pixelIndex + 3] = 32; // Make it translucent
-            } else if (x % shreadSize !== 1 || y % shreadSize !== 1) { // Otherwise only draw the middle pixel
+            } 
+            else if (!previewMode && (x % shreadSize !== 1 || y % shreadSize !== 1))
+            { // Only draw the center pixel unless in preview mode
               imageData.data[pixelIndex + 3] = 0; // Make the pixel transparent on the alpha channel
             } else {
               // Center pixel: keep only if in allowed site palette
