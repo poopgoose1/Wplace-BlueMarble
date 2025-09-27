@@ -404,6 +404,12 @@ function buildOverlayMain() {
             instance.handleDisplayStatus(`Drew to canvas!`);
           }
         }).buildElement()
+        .addButton({'id': 'bm-button-move', 'textContent': 'Preview'}, (instance, button) => {
+          button.onclick = () => {
+            instance.apiManager?.templateManager?.togglePreviewMode();
+            instance.handleDisplayStatus(`Previewing template!`);
+          }
+        }).buildElement()
         .addButton({'id': 'bm-button-disable', 'textContent': 'Disable'}, (instance, button) => {
           button.onclick = () => {
             instance.apiManager?.templateManager?.setTemplatesShouldBeDrawn(false);

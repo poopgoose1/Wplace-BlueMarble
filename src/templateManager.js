@@ -86,6 +86,9 @@ export default class TemplateManager {
     // A map of correct pixels, based on their color
     this.correctPixelMap = new Map();
 
+    // Whether or not we are in preview mode
+    this.previewMode = false;
+
   }
 
   /** Retrieves the pixel art canvas.
@@ -261,7 +264,13 @@ export default class TemplateManager {
     // Returns early if no templates should be drawn
     if (!this.templatesShouldBeDrawn) {return tileBlob;}
 
-    const drawSize = this.tileSize * this.drawMult; // Calculate draw multiplier for scaling
+    let drawSize = this.tileSize * this.drawMult; // Calculate draw multiplier for scaling
+
+    if(this.previewMode)
+    {
+      drawSize = this.tileSize; // In preview mode, we draw at normal size
+    }
+    
 
     // Format tile coordinates with proper padding for consistent lookup
     tileCoords = tileCoords[0].toString().padStart(4, '0') + ',' + tileCoords[1].toString().padStart(4, '0');
@@ -896,5 +905,11 @@ export default class TemplateManager {
    */
   setTemplatesShouldBeDrawn(value) {
     this.templatesShouldBeDrawn = value;
+  }
+
+  /** Toggles preview mode */
+  togglePreviewMode() 
+  {
+    this.previewMode = !this.previewMode; 
   }
 }
